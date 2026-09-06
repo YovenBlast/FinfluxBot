@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Document Chatbot
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- ============================= -->
+    <!-- Header -->
+    <!-- ============================= -->
+
+    <header>
+
+        <div>
+
+            <h1>
+                📚 Document Assistant
+            </h1>
+
+            <span>
+                Local PDF, Word & Screenshot Search
+            </span>
+
+        </div>
+
+
+        <button
+            id="reindexButton"
+            class="reindex-button"
+        >
+            🔄 Re-index
+        </button>
+
+    </header>
+
+
+    <!-- ============================= -->
+    <!-- Chat -->
+    <!-- ============================= -->
+
+    <main id="chat">
+
+
+        <div class="welcome">
+
+            <div class="welcome-icon">
+                🤖
+            </div>
+
+            <h2>
+                Hello!
+            </h2>
+
+            <p>
+                Ask me something about your
+                PDF or Word documents, or upload a screenshot.
+            </p>
+
+        </div>
+
+
+    </main>
+
+
+    <!-- ============================= -->
+    <!-- Image Preview -->
+    <!-- ============================= -->
+
+    <div
+        id="imagePreview"
+        class="image-preview"
+        style="display:none;"
+    >
+
+        <img
+            id="previewImage"
+            alt="Screenshot preview"
+        >
+
+        <button
+            id="removeImage"
+        >
+            ✕
+        </button>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- Input -->
+    <!-- ============================= -->
+
+    <footer>
+
+
+        <label
+            class="upload-button"
+            title="Upload screenshot"
+        >
+
+            📎
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                hidden
+            >
+
+        </label>
+
+
+        <input
+            type="text"
+            id="userInput"
+            placeholder="Ask about your documents..."
+            autocomplete="off"
+        >
+
+
+        <button
+            id="sendButton"
+        >
+            Send
+        </button>
+
+
+    </footer>
+
+
+</div>
+
+
+<script>
+
+
+// ==========================================
+// Variables
+// ==========================================
+
+let selectedImage = null;
+
+
+const chat =
+    document.getElementById("chat");
+
+
+const userInput =
+    document.getElementById("userInput");
+
+
+const sendButton =
+    document.getElementById("sendButton");
+
+
+const imageInput =
+    document.getElementById("imageInput");
+
+
+const imagePreview =
+    document.getElementById("imagePreview");
+
+
+const previewImage =
+    document.getElementById("previewImage");
+
+
+const removeImage =
+    document.getElementById("removeImage");
+
+
+const reindexButton =
+    document.getElementById("reindexButton");
+
+
+// ==========================================
+// Add message
+// ==========================================
+
+function addMessage(
+    text,
+    sender,
+    timing = null
+) {
+
+    const message =
+        document.createElement("div");
+
+
+    message.className =
+        `message ${sender}`;
+
+
+    const bubble =
+        document.createElement("div");
+
+
+    bubble.className =
+        "bubble";
+
+
+    // ======================================
+    // AI response text
+    // ======================================
+
+    const responseText =
+        document.createElement("div");
+
+
+    responseText.textContent =
+        text;
+
+
+    bubble.appendChild(
+        responseText
+    );
+
+
+    // ======================================
+    // AI generation time
+    // ======================================
+
+    if (
+        sender === "bot" &&
+        timing &&
+        timing.ai !== undefined
+    ) {
+
+        const timingElement =
+            document.createElement("div");
+
+
+        timingElement.className =
+            "ai-timing";
+
+
+        timingElement.textContent =
+            `AI generated in ${timing.ai} seconds`;
+
+
+        bubble.appendChild(
+            timingElement
+        );
+
+    }
+
+
+    message.appendChild(
+        bubble
+    );
+
+
+    chat.appendChild(
+        message
+    );
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+}
+
+
+// ==========================================
+// Loading
+// ==========================================
+
+function showLoading() {
+
+    const message =
+        document.createElement("div");
+
+
+    message.id =
+        "loading";
+
+
+    message.className =
+        "message bot";
+
+
+    message.innerHTML =
+        `
+        <div class="bubble">
+            <span class="typing">
+                Thinking...
+            </span>
+        </div>
+        `;
+
+
+    chat.appendChild(
+        message
+    );
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+}
+
+
+function hideLoading() {
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    if (loading) {
+
+        loading.remove();
+
+    }
+}
+
+
+// ==========================================
+// Image selection
+// ==========================================
+
+imageInput.addEventListener(
+    "change",
+    function() {
+
+        const file =
+            this.files[0];
+
+
+        if (!file)
+            return;
+
+
+        selectedImage =
+            file;
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(event) {
+
+                previewImage.src =
+                    event.target.result;
+
+
+                imagePreview.style.display =
+                    "flex";
+
+            };
+
+
+        reader.readAsDataURL(
+            file
+        );
+
+    }
+);
+
+
+// ==========================================
+// Remove image
+// ==========================================
+
+removeImage.addEventListener(
+    "click",
+    function() {
+
+        selectedImage =
+            null;
+
+
+        imageInput.value =
+            "";
+
+
+        imagePreview.style.display =
+            "none";
+
+    }
+);
+
+
+// ==========================================
+// Send message
+// ==========================================
+
+async function sendMessage() {
+
+    const question =
+        userInput.value.trim();
+
+
+    if (
+        !question &&
+        !selectedImage
+    ) {
+
+        return;
+
+    }
+
+
+    // Show user message
+
+    if (question) {
+
+        addMessage(
+            question,
+            "user"
+        );
+
+    }
+
+
+    if (selectedImage) {
+
+        addMessage(
+            "📷 Screenshot uploaded",
+            "user"
+        );
+
+    }
+
+
+    userInput.value =
+        "";
+
+
+    showLoading();
+
+
+    try {
+
+
+        // ======================================
+        // Screenshot
+        // ======================================
+
+        if (selectedImage) {
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "image",
+                selectedImage
+            );
+
+
+            const response =
+                await fetch(
+                    "/analyze-image",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            hideLoading();
+
+
+            addMessage(
+                data.response,
+                "bot"
+            );
+
+
+            selectedImage =
+                null;
+
+
+            imageInput.value =
+                "";
+
+
+            imagePreview.style.display =
+                "none";
+
+        }
+
+
+        // ======================================
+        // PDF question
+        // ======================================
+
+        else {
+
+            const response =
+                await fetch(
+                    "/ask",
+                    {
+
+                        method:
+                            "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                question:
+                                    question
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            hideLoading();
+
+
+            addMessage(
+                data.response,
+                "bot",
+                data.timing
+            );
+
+        }
+
+
+    }
+
+    catch (error) {
+
+        hideLoading();
+
+
+        addMessage(
+
+            "Error: "
+            + error.message,
+
+            "bot"
+
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// Send button
+// ==========================================
+
+sendButton.addEventListener(
+    "click",
+    sendMessage
+);
+
+
+// ==========================================
+// Enter key
+// ==========================================
+
+userInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            sendMessage();
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// Re-index PDFs
+// ==========================================
+
+reindexButton.addEventListener(
+    "click",
+    async function() {
+
+        reindexButton.disabled =
+            true;
+
+
+        reindexButton.textContent =
+            "⏳ Indexing...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/reindex",
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            alert(
+                data.message
+            );
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Error: "
+                + error.message
+            );
+
+        }
+
+
+        reindexButton.disabled =
+            false;
+
+
+        reindexButton.textContent =
+            "🔄 Re-index";
+
+    }
+);
+
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,10 @@
+Flask
+PyMuPDF
+pytesseract
+Pillow
+scikit-learn
+numpy
+python-docx
+python-dotenv
+gunicorn
+google-genai
