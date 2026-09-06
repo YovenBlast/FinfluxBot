@@ -65,12 +65,12 @@ os.makedirs(
 # Tesseract configuration
 # ==========================================
 
-TESSERACT_PATH = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+TESSERACT_PATH = os.getenv(
+    "TESSERACT_PATH"
 )
 
-if os.path.exists(TESSERACT_PATH):
-
+if TESSERACT_PATH:
     pytesseract.pytesseract.tesseract_cmd = (
         TESSERACT_PATH
     )
