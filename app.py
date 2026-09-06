@@ -31,9 +31,11 @@ app = Flask(__name__)
 # Configuration
 # ==========================================
 
-DOCS_FOLDER = "docs"
-UPLOAD_FOLDER = "uploads"
-DATA_FOLDER = "data"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DOCS_FOLDER = os.path.join(BASE_DIR, "docs")
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+DATA_FOLDER = os.path.join(BASE_DIR, "data")
 
 DATABASE_FILE = os.path.join(
     DATA_FOLDER,
@@ -342,7 +344,23 @@ def index_documents():
 
     return documents
 
+# ==========================================
+# Initial document indexing
+# ==========================================
 
+try:
+
+    print("\n===================================")
+    print("STARTUP DOCUMENT INDEXING")
+    print("===================================")
+
+    index_documents()
+
+except Exception as e:
+
+    print(
+        f"Startup indexing failed: {e}"
+    )
 # ==========================================
 # Home page
 # ==========================================
